@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.tfstate
+*.tfstate.*
+.terraform/
+azure-credentials.json
+*.pem
+*.key
+coverage/

@@ -1,0 +1,208 @@
+# Azure DevSecOps CI/CD Pipeline for 3-Tier Application on AKS
+# Architecture: Frontend (React) -> Backend API (Node.js) -> Database (PostgreSQL)
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+  paths:
+    include:
+      - src/*
+      - infrastructure/*
+      - k8s/*
+
+variables:
+  azureSubscription: 'Azure-Service-Connection'
+  resourceGroup: 'rg-ecommerce-prod'
+  aksCluster: 'aks-ecommerce-prod'
+  acrName: 'acrecommerceprod'
+  keyVaultName: 'kv-ecommerce-prod'
+  
+  frontendImage: '$(acrName).azurecr.io/frontend'
+  backendImage: '$(acrName).azurecr.io/backend'
+  imageTag: '$(Build.BuildId)'
+  
+  trivyVersion: '0.48.0'
+  sonarQubeConnection: 'SonarQube-Connection'
+  tfVersion: '1.6.0'
+  tfWorkingDir: '$(System.DefaultWorkingDirectory)/infrastructure/terraform'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: CodeQualityAndSecurity
+  displayName: 'Code Quality & Security Scanning'
+  jobs:
+  - job: StaticAnalysis
+    displayName: 'Static Code Analysis'
+    steps:
+    
+    - task: CmdLine@2
+      displayName: 'Secret Scanning with Gitleaks'
+      inputs:
+        script: |
+          docker run -v $(Build.SourcesDirectory):/path \
+            zricethezav/gitleaks:latest detect \
+            --source="/path" \
+            --report-format=sarif \
+            --report-path=/path/gitleaks-report.sarif \
+            --verbose
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Gitleaks Report'
+      condition: always()
+      inputs:
+        PathtoPublish: '$(Build.SourcesDirectory)/gitleaks-report.sarif'
+        ArtifactName: 'SecurityReports'
+    
+    - task: SonarQubePrepare@5
+      displayName: 'Prepare SonarQube Analysis'
+      inputs:
+        SonarQube: '$(sonarQubeConnection)'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'ecommerce-app'
+        cliProjectName: 'E-Commerce Application'
+        cliSources: 'src'
+    
+    - task: Npm@1
+      displayName: 'Install Frontend Dependencies'
+      inputs:
+        command: 'ci'
+        workingDir: 'src/frontend'
+    
+    - task: Npm@1
+      displayName: 'Run Frontend Tests'
+      inputs:
+        command: 'custom'
+        customCommand: 'run test:ci'
+        workingDir: 'src/frontend'
+    
+    - task: Npm@1
+      displayName: 'Install Backend Dependencies'
+      inputs:
+        command: 'ci'
+        workingDir: 'src/backend'
+    
+    - task: Npm@1
+      displayName: 'Run Backend Tests'
+      inputs:
+        command: 'custom'
+        customCommand: 'run test:ci'
+        workingDir: 'src/backend'
+    
+    - task: SonarQubeAnalyze@5
+      displayName: 'Run SonarQube Analysis'
+    
+    - task: SonarQubePublish@5
+      displayName: 'Publish SonarQube Results'
+
+- stage: InfrastructureSecurity
+  displayName: 'Infrastructure Security & Provisioning'
+  dependsOn: CodeQualityAndSecurity
+  condition: succeeded()
+  jobs:
+  - job: TerraformSecurity
+    displayName: 'Terraform Security Scan'
+    steps:
+    
+    - task: CmdLine@2
+      displayName: 'Checkov IaC Security Scan'
+      inputs:
+        script: |
+          pip install checkov
+          checkov -d $(tfWorkingDir) --framework terraform --soft-fail
+
+- stage: BuildAndContainerSecurity
+  displayName: 'Build & Container Security'
+  dependsOn: InfrastructureSecurity
+  condition: succeeded()
+  jobs:
+  - job: BuildImages
+    displayName: 'Build Docker Images'
+    steps:
+    
+    - task: Docker@2
+      displayName: 'Build Frontend Image'
+      inputs:
+        command: build
+        repository: 'frontend'
+        dockerfile: 'src/frontend/Dockerfile'
+        tags: '$(imageTag)'
+    
+    - task: Docker@2
+      displayName: 'Build Backend Image'
+      inputs:
+        command: build
+        repository: 'backend'
+        dockerfile: 'src/backend/Dockerfile'
+        tags: '$(imageTag)'
+    
+    - task: CmdLine@2
+      displayName: 'Trivy Scan - Frontend'
+      inputs:
+        script: |
+          docker run aquasec/trivy:latest image \
+            --severity HIGH,CRITICAL \
+            --exit-code 0 \
+            $(frontendImage):$(imageTag)
+    
+    - task: CmdLine@2
+      displayName: 'Trivy Scan - Backend'
+      inputs:
+        script: |
+          docker run aquasec/trivy:latest image \
+            --severity HIGH,CRITICAL \
+            --exit-code 0 \
+            $(backendImage):$(imageTag)
+
+- stage: DeployToStaging
+  displayName: 'Deploy to Staging'
+  dependsOn: BuildAndContainerSecurity
+  condition: succeeded()
+  jobs:
+  - deployment: DeployStaging
+    displayName: 'Deploy to Staging Environment'
+    environment: 'ecommerce-staging'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: KubernetesManifest@0
+            displayName: 'Deploy to Staging'
+            inputs:
+              action: 'deploy'
+              namespace: 'staging'
+              manifests: |
+                k8s/frontend/*.yaml
+                k8s/backend/*.yaml
+
+- stage: DeployToProduction
+  displayName: 'Deploy to Production'
+  dependsOn: DeployToStaging
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployProduction
+    displayName: 'Blue-Green Production Deployment'
+    environment: 'ecommerce-production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: ManualValidation@0
+            displayName: 'Approve Production Deployment'
+            inputs:
+              notifyUsers: 'ops-team@company.com'
+              instructions: 'Review and approve production deployment'
+          
+          - task: KubernetesManifest@0
+            displayName: 'Deploy to Production'
+            inputs:
+              action: 'deploy'
+              namespace: 'production'
+              manifests: 'k8s/**/*.yaml'
