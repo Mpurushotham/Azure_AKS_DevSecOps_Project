@@ -205,7 +205,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
 
 module "postgresql" {
   source = "./modules/postgresql"
-  
   resource_group_name    = azurerm_resource_group.main.name
   location               = azurerm_resource_group.main.location
   server_name            = "psql-${var.project_name}-${var.environment}"
