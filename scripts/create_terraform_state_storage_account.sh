@@ -18,11 +18,11 @@ az storage container create \
 
 # Update main.tf with storage account name
 echo "Update main.tf with: storage_account_name = \"$STORAGE_NAME\""
-sed -i '' "s/storage_account_name = \".*\"/storage_account_name = \"$STORAGE_NAME\"/" ../infrastructure/main.tf
+sed -i '' "s/storage_account_name = \".*\"/storage_account_name = \"$STORAGE_NAME\"/" ../infrastructure/terraform/main.tf
 echo "Update main.tf with: container_name = \"tfstate\""
-sed -i '' "s/container_name = \".*\"/container_name = \"tfstate\"/" ../infrastructure/main.tf
+sed -i '' "s/container_name = \".*\"/container_name = \"tfstate\"/" ../infrastructure/terraform/main.tf
 echo "Update main.tf with: key = \"terraform.tfstate\""
-sed -i '' "s/key = \".*\"/key = \"terraform.tfstate\"/" ../infrastructure/main.tf
+sed -i '' "s/key = \".*\"/key = \"terraform.tfstate\"/" ../infrastructure/terraform/main.tf
 echo "Done."
 echo "You can now run 'terraform init' in the parent directory."
 
