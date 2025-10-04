@@ -33,7 +33,7 @@ user_node_max_count = 20
 acr_sku = "Premium"
 
 # Log Analytics
-log_retention_days = 90
+log_retention_days = 30
 
 # PostgreSQL Configuration
 postgres_admin_username = "psqladmin"
@@ -41,7 +41,7 @@ postgres_admin_password = "YourStrongPassword123!"  # Change this!
 postgres_sku_name       = "GP_Standard_D4s_v3"
 postgres_storage_mb     = 32768
 postgres_version        = "14"
-postgres_backup_retention_days = 35
+postgres_backup_retention_days = 30
 postgres_geo_redundant_backup  = true
 postgres_ha_enabled            = true
 
