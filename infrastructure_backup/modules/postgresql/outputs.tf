@@ -1,7 +1,24 @@
 # FILE: infrastructure/terraform/modules/postgresql/outputs.tf
-# =============================================================================
-# MODULE: postgresql
+output "server_id" {
+  value = azurerm_postgresql_flexible_server.main.id
+}
 
+output "server_name" {
+  value = azurerm_postgresql_flexible_server.main.name
+}
+
+output "server_fqdn" {
+  value = azurerm_postgresql_flexible_server.main.fqdn
+}
+
+output "administrator_login" {
+  value     = azurerm_postgresql_flexible_server.main.administrator_login
+  sensitive = true
+}
+
+output "database_name" {
+  value = azurerm_postgresql_flexible_server_database.main.name
+}
 # Output Definitions
 output "server_id" {
   description = "ID of the PostgreSQL Flexible Server"

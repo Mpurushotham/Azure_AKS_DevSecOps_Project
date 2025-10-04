@@ -1,3 +1,8 @@
+# =============================================================================
+# FILE: infrastructure/terraform/main.tf
+# Main Terraform Configuration
+# =============================================================================
+
 terraform {
   required_version = ">= 1.6.0"
   
@@ -14,16 +19,17 @@ terraform {
   
   backend "azurerm" {
     resource_group_name  = "rg-terraform-state"
-    storage_account_name = "sttfstate1e6ea0ad"
+    storage_account_name = "sttfstate1e6ea0ad"  # Replace with your actual storage account name
     container_name       = "tfstate"
     key                  = "ecommerce.tfstate"
   }
 }
 
 provider "azurerm" {
+    skip_provider_registration = "true"
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = true
+      purge_soft_delete_on_destroy = true
       recover_soft_deleted_key_vaults = true
     }
     resource_group {
@@ -32,23 +38,26 @@ provider "azurerm" {
   }
 }
 
+# Data source for current client config
 data "azurerm_client_config" "current" {}
 
+# Random string for unique naming
 resource "random_string" "unique" {
   length  = 6
   special = false
   upper   = false
 }
 
+# Main Resource Group
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
 }
 
+# Networking Module
 module "networking" {
   source = "./modules/networking"
-  
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   vnet_name           = "vnet-${var.project_name}-${var.environment}"
@@ -72,6 +81,7 @@ module "networking" {
   tags = var.tags
 }
 
+# Log Analytics Workspace
 module "log_analytics" {
   source = "./modules/log_analytics"
   
@@ -84,6 +94,7 @@ module "log_analytics" {
   tags = var.tags
 }
 
+# Application Insights
 module "application_insights" {
   source = "./modules/application_insights"
   
@@ -96,61 +107,77 @@ module "application_insights" {
   tags = var.tags
 }
 
+# Azure Container Registry
 module "acr" {
   source = "./modules/acr"
-  
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   acr_name            = "acr${var.project_name}${var.environment}${random_string.unique.result}"
   sku                 = var.acr_sku
   admin_enabled       = false
   
+  # Network rules
   network_rule_set = {
-    default_action             = "Deny"
-    virtual_network_subnet_ids = [module.networking.subnet_ids["aks"]]
+    default_action = "Deny"
+    virtual_network_subnet_ids = [
+      module.networking.subnet_ids["aks"]
+    ]
   }
   
   tags = var.tags
 }
 
+# Azure Key Vault
 module "keyvault" {
   source = "./modules/keyvault"
-  
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   keyvault_name       = "kv-${var.project_name}-${var.environment}-${random_string.unique.result}"
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "premium"
   
+  # Network ACLs
   network_acls = {
     default_action             = "Deny"
     bypass                     = "AzureServices"
-    virtual_network_subnet_ids = [module.networking.subnet_ids["aks"]]
+    virtual_network_subnet_ids = [
+      module.networking.subnet_ids["aks"]
+    ]
   }
   
+  # Access policies
   access_policies = [
     {
       tenant_id = data.azurerm_client_config.current.tenant_id
       object_id = data.azurerm_client_config.current.object_id
       
-      key_permissions = ["Get", "List", "Create", "Delete", "Update"]
-      secret_permissions = ["Get", "List", "Set", "Delete", "Recover", "Backup", "Restore"]
-      certificate_permissions = ["Get", "List", "Create", "Delete", "Update"]
+      key_permissions = [
+        "Get", "List", "Create", "Delete", "Update"
+      ]
+      
+      secret_permissions = [
+        "Get", "List", "Set", "Delete", "Recover", "Backup", "Restore"
+      ]
+      
+      certificate_permissions = [
+        "Get", "List", "Create", "Delete", "Update"
+      ]
     }
   ]
   
   tags = var.tags
 }
 
+# Azure Kubernetes Service
 module "aks" {
   source = "./modules/aks"
-  
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   cluster_name        = "aks-${var.project_name}-${var.environment}"
   dns_prefix          = "${var.project_name}-${var.environment}"
   kubernetes_version  = var.kubernetes_version
   
+  # System node pool
   default_node_pool = {
     name                = "system"
     node_count          = var.system_node_count
@@ -163,6 +190,7 @@ module "aks" {
     type                = "VirtualMachineScaleSets"
   }
   
+  # Network profile
   network_profile = {
     network_plugin    = "azure"
     network_policy    = "calico"
@@ -171,19 +199,24 @@ module "aks" {
     dns_service_ip    = "10.1.0.10"
   }
   
+  # Azure AD RBAC
   azure_active_directory_role_based_access_control = {
-    managed            = true
-    azure_rbac_enabled = true
+    managed                = true
+    azure_rbac_enabled     = true
   }
   
+  # Monitoring
   oms_agent = {
     log_analytics_workspace_id = module.log_analytics.workspace_id
   }
   
+  # ACR integration
   acr_id = module.acr.acr_id
-  tags   = var.tags
+  
+  tags = var.tags
 }
 
+# User node pool for applications
 resource "azurerm_kubernetes_cluster_node_pool" "user" {
   name                  = "user"
   kubernetes_cluster_id = module.aks.cluster_id
@@ -196,25 +229,28 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   os_disk_size_gb       = 256
   
   node_labels = {
-    "workload"    = "application"
+    "workload" = "application"
     "environment" = var.environment
   }
   
   tags = var.tags
 }
 
+# PostgreSQL Flexible Server
 module "postgresql" {
   source = "./modules/postgresql"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  server_name         = "psql-${var.project_name}-${var.environment}"
   
-  resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
-  server_name            = "psql-${var.project_name}-${var.environment}"
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
-  sku_name               = var.postgres_sku_name
-  storage_mb             = var.postgres_storage_mb
-  postgres_version       = var.postgres_version
-  backup_retention_days  = var.postgres_backup_retention_days
+  
+  sku_name   = var.postgres_sku_name
+  storage_mb = var.postgres_storage_mb
+  version    = var.postgres_version
+  
+  backup_retention_days        = var.postgres_backup_retention_days
   geo_redundant_backup_enabled = var.postgres_geo_redundant_backup
   
   high_availability = {
@@ -222,5 +258,6 @@ module "postgresql" {
   }
   
   delegated_subnet_id = module.networking.subnet_ids["database"]
-  tags                = var.tags
+  
+  tags = var.tags
 }

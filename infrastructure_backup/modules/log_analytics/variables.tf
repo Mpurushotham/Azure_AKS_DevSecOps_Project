@@ -1,3 +1,4 @@
+# FILE: infrastructure/terraform/modules/log_analytics/variables.tf
 variable "resource_group_name" {
   type = string
 }
@@ -23,3 +24,4 @@ variable "retention_in_days" {
 variable "tags" {
   type = map(string)
 }
+# FILE: infrastructure/terraform/modules/log_analytics/variables.tf    --- IGNORE ---

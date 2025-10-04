@@ -29,7 +29,7 @@ variable "storage_mb" {
   type = number
 }
 
-variable "postgres_version" {
+variable "version" {
   type = string
 }
 

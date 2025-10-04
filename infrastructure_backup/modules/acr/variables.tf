@@ -1,3 +1,4 @@
+# FILE: infrastructure/terraform/modules/acr/variables.tf
 variable "resource_group_name" {
   type = string
 }
@@ -31,3 +32,13 @@ variable "network_rule_set" {
 variable "tags" {
   type = map(string)
 }
+# Output Definitions
+output "acr_id" {
+  description = "ID of the Azure Container Registry"
+  value       = azurerm_container_registry.main.id
+}
+output "acr_name" {
+  description = "Name of the Azure Container Registry"
+  value       = azurerm_container_registry.main.name
+}
+# FILE: infrastructure/terraform/modules/acr/main.tf

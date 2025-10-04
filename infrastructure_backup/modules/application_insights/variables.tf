@@ -1,3 +1,4 @@
+# FILE: infrastructure/terraform/modules/application_insights/variables.tf
 variable "resource_group_name" {
   type = string
 }
@@ -22,3 +23,4 @@ variable "application_type" {
 variable "tags" {
   type = map(string)
 }
+# FILE: infrastructure/terraform/modules/application_insights/variables.tf    --- IGNORE ---

@@ -1,3 +1,8 @@
+# =============================================================================
+# MODULE: acr
+# FILE: infrastructure/terraform/modules/acr/main.tf
+# =============================================================================
+
 resource "azurerm_container_registry" "main" {
   name                = var.acr_name
   resource_group_name = var.resource_group_name
@@ -21,4 +26,14 @@ resource "azurerm_container_registry" "main" {
   }
   
   tags = var.tags
+}
+# Output Definitions
+output "acr_id" {
+  description = "ID of the Azure Container Registry"
+  value       = azurerm_container_registry.main.id
+}
+
+output "acr_name" {
+  description = "Name of the Azure Container Registry"
+  value       = azurerm_container_registry.main.name
 }
