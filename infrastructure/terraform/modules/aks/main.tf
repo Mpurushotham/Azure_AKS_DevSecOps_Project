@@ -53,4 +53,33 @@ resource "azurerm_role_assignment" "aks_acr" {
   scope                            = var.acr_id
   skip_service_principal_aad_check = true
 }
-# Output the kubeconfig
+
+/*
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = "aks-ecommerce-prod"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = "aksecommerceprod"
+  
+  # Use a stable version, remove preview features
+  kubernetes_version = "1.27" # Use current stable version
+  
+  default_node_pool {
+    name       = "default"
+    node_count = 2
+    vm_size    = "Standard_DS2_v2"
+    vnet_subnet_id = azurerm_subnet.aks.id
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_profile {
+    network_plugin = "azure"
+    network_policy = "azure"
+    service_cidr   = "10.0.2.0/24"
+    dns_service_ip = "10.0.2.10"
+  }
+}
+*/

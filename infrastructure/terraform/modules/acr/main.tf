@@ -22,3 +22,5 @@ resource "azurerm_container_registry" "main" {
 
   tags = var.tags
 }
+
+

@@ -56,7 +56,7 @@ variable "services_subnet_address_prefix" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.28.3"
+  default     = "1.27"
 }
 
 variable "system_node_count" {
@@ -68,7 +68,7 @@ variable "system_node_count" {
 variable "system_node_vm_size" {
   description = "VM size for system nodes"
   type        = string
-  default     = "Standard_D4s_v3"
+  default     = "Standard_DS2_v2"
 }
 
 variable "system_node_min_count" {
@@ -92,7 +92,7 @@ variable "user_node_count" {
 variable "user_node_vm_size" {
   description = "VM size for user nodes"
   type        = string
-  default     = "Standard_D8s_v3"
+  default     = "Standard_DS2_v2"
 }
 
 variable "user_node_min_count" {

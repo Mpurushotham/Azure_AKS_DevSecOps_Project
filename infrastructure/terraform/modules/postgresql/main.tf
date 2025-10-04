@@ -59,3 +59,5 @@ output "postgresql_administrator_login" {
   sensitive   = true
 }
 # FILE: infrastructure/terraform/modules/postgresql/main.tf    --- IGNORE ---   
+
+
