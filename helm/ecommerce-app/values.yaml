@@ -1,0 +1,52 @@
+replicaCount: 3
+
+frontend:
+  image:
+    repository: acrecommerceprod.azurecr.io/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+backend:
+  image:
+    repository: acrecommerceprod.azurecr.io/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: ecommerce.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ecommerce-tls
+      hosts:
+        - ecommerce.company.com
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
