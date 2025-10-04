@@ -1,10 +1,12 @@
+# Configure the Terraform AzureRM Provider
+
 terraform {
   required_version = ">= 1.6.0"
 
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.75.0"
+      version = "3.70.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -14,12 +16,14 @@ terraform {
 
   backend "azurerm" {
     resource_group_name  = "rg-terraform-state"
-    storage_account_name = "sttfstate1e6ea0ad"
+    storage_account_name = "sttfstatec264d73c"
     container_name       = "tfstate"
     key                  = "ecommerce.tfstate"
   }
 }
+
 # Configure the Microsoft Azure Provider
+
 provider "azurerm" {
   # resource_provider_registrations = "none" # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
   features {
@@ -34,19 +38,27 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
+# Get current Azure client configuration
+
 data "azurerm_client_config" "current" {}
 
+# Generate a random string for unique resource names
+
 resource "random_string" "unique" {
-  length  = 6
+  length  = 8
   special = false
   upper   = false
 }
+
+# Create Resource Group
 
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
 }
+
+# Create networking Module for different components 
 
 module "networking" {
   source = "./modules/networking"
@@ -74,6 +86,8 @@ module "networking" {
   tags = var.tags
 }
 
+# Create Log Analytics Module for different components 
+
 module "log_analytics" {
   source = "./modules/log_analytics"
 
@@ -98,6 +112,8 @@ module "application_insights" {
   tags = var.tags
 }
 
+# Create Azure Container Registry Module
+
 module "acr" {
   source = "./modules/acr"
 
@@ -107,29 +123,35 @@ module "acr" {
   sku                 = var.acr_sku
   admin_enabled       = false
 
+  /* Start with no network restrictions, can be added later after AKS is deployed
+  
   network_rule_set = {
     default_action             = "Deny"
     virtual_network_subnet_ids = [module.networking.subnet_ids["aks"]]
   }
-
+*/
   tags = var.tags
 }
+
+# Create Key Vault Module
 
 module "keyvault" {
   source = "./modules/keyvault"
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  keyvault_name       = "kv-${var.project_name}-${var.environment}-${random_string.unique.result}"
+  keyvault_name       = "kv-${var.environment}-${random_string.unique.result}"
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "premium"
+
+/* Start with no network restrictions, can be added later after AKS is deployed
 
   network_acls = {
     default_action             = "Deny"
     bypass                     = "AzureServices"
     virtual_network_subnet_ids = [module.networking.subnet_ids["aks"]]
   }
-
+*/
   access_policies = [
     {
       tenant_id = data.azurerm_client_config.current.tenant_id
@@ -143,6 +165,8 @@ module "keyvault" {
 
   tags = var.tags
 }
+
+# Create AKS Cluster Module
 
 module "aks" {
   source = "./modules/aks"
@@ -205,11 +229,13 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   tags = var.tags
 }
 
+# Create PostgreSQL Module
+
 module "postgresql" {
   source                       = "./modules/postgresql"
   resource_group_name          = azurerm_resource_group.main.name
   location                     = azurerm_resource_group.main.location
-  server_name                  = "psql-${var.project_name}-${var.environment}"
+  server_name                  = "psql-${var.project_name}-${var.environment}-${random_string.unique.result}"
   administrator_login          = var.postgres_admin_username
   administrator_password       = var.postgres_admin_password
   sku_name                     = var.postgres_sku_name
@@ -217,11 +243,16 @@ module "postgresql" {
   postgres_version             = var.postgres_version
   backup_retention_days        = var.postgres_backup_retention_days
   geo_redundant_backup_enabled = var.postgres_geo_redundant_backup
-
+  
   high_availability = {
     mode = var.postgres_ha_enabled ? "ZoneRedundant" : "Disabled"
   }
 
   delegated_subnet_id = module.networking.subnet_ids["database"]
+  virtual_network_id  = module.networking.vnet_id
   tags                = var.tags
 }
+
+# End of main.tf
+
+

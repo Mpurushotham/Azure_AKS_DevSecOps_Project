@@ -1,4 +1,3 @@
-# FILE: infrastructure/terraform/modules/postgresql/variables.tf
 variable "resource_group_name" {
   type = string
 }
@@ -51,7 +50,11 @@ variable "delegated_subnet_id" {
   type = string
 }
 
+variable "virtual_network_id" {
+  type = string
+  description = "Virtual Network ID for Private DNS Zone linking"
+}
+
 variable "tags" {
   type = map(string)
 }
-# FILE: infrastructure/terraform/modules/postgresql/variables.tf    --- IGNORE ---

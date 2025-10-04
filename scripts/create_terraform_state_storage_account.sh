@@ -5,7 +5,7 @@
 # Create storage
 STORAGE_NAME="sttfstate$(openssl rand -hex 4)"
 
-az group create --name rg-terraform-state --location eastus
+az group create --name rg-terraform-state --location northeurope
 
 az storage account create \
   --name $STORAGE_NAME \

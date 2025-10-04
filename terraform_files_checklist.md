@@ -484,7 +484,7 @@ nano terraform.tfvars
 
 # 2. Create Terraform state storage
 az login
-az group create --name rg-terraform-state --location eastus
+az group create --name rg-terraform-state --location northeurope
 az storage account create --name sttfstate$(openssl rand -hex 4) \
   --resource-group rg-terraform-state --sku Standard_LRS
 az storage container create --name tfstate --account-name <storage-name>

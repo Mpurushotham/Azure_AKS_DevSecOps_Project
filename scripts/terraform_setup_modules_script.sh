@@ -717,7 +717,7 @@ echo "📝 Creating terraform.tfvars example..."
 cat > terraform.tfvars.example << 'EOF'
 # Azure Configuration
 resource_group_name = "rg-ecommerce-prod"
-location            = "eastus"
+location            = "northeurope"
 project_name        = "ecommerce"
 environment         = "prod"
 

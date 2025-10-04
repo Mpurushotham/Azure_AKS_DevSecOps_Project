@@ -1,15 +1,16 @@
-# =============================================================================
-# MODULE: aks
-# FILE: infrastructure/terraform/modules/aks/main.tf
-# =============================================================================
-
+resource "azurerm_resource_group" "name" {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
+  
+}
 resource "azurerm_kubernetes_cluster" "main" {
   name                = var.cluster_name
   location            = var.location
   resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix
   kubernetes_version  = var.kubernetes_version
-
+  
   default_node_pool {
     name                = var.default_node_pool.name
     node_count          = var.default_node_pool.node_count
@@ -21,11 +22,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     os_disk_size_gb     = var.default_node_pool.os_disk_size_gb
     type                = var.default_node_pool.type
   }
-
+  
   identity {
     type = "SystemAssigned"
   }
-
+  
   network_profile {
     network_plugin    = var.network_profile.network_plugin
     network_policy    = var.network_profile.network_policy
@@ -33,53 +34,28 @@ resource "azurerm_kubernetes_cluster" "main" {
     service_cidr      = var.network_profile.service_cidr
     dns_service_ip    = var.network_profile.dns_service_ip
   }
-
+  
   azure_active_directory_role_based_access_control {
     managed            = var.azure_active_directory_role_based_access_control.managed
     azure_rbac_enabled = var.azure_active_directory_role_based_access_control.azure_rbac_enabled
   }
-
+  
   oms_agent {
     log_analytics_workspace_id = var.oms_agent.log_analytics_workspace_id
   }
-
+  
   tags = var.tags
+  
+  lifecycle {
+    ignore_changes = [
+      kubernetes_version
+    ]
+  }
 }
 
-# Attach ACR to AKS
 resource "azurerm_role_assignment" "aks_acr" {
   principal_id                     = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
   scope                            = var.acr_id
   skip_service_principal_aad_check = true
 }
-
-/*
-resource "azurerm_kubernetes_cluster" "main" {
-  name                = "aks-ecommerce-prod"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = "aksecommerceprod"
-  
-  # Use a stable version, remove preview features
-  kubernetes_version = "1.27" # Use current stable version
-  
-  default_node_pool {
-    name       = "default"
-    node_count = 2
-    vm_size    = "Standard_DS2_v2"
-    vnet_subnet_id = azurerm_subnet.aks.id
-  }
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  network_profile {
-    network_plugin = "azure"
-    network_policy = "azure"
-    service_cidr   = "10.0.2.0/24"
-    dns_service_ip = "10.0.2.10"
-  }
-}
-*/

@@ -134,7 +134,7 @@ nano terraform.tfvars
 ```hcl
 # Resource naming
 resource_group_name = "rg-ecommerce-prod"          # Your resource group name
-location            = "eastus"                      # Your Azure region
+location            = "northeurope"                      # Your Azure region
 project_name        = "ecommerce"                   # Your project name
 environment         = "prod"                        # Environment name
 
@@ -179,7 +179,7 @@ This stores your Terraform state file securely in Azure:
 RESOURCE_GROUP_NAME="rg-terraform-state"
 STORAGE_ACCOUNT_NAME="sttfstate$(openssl rand -hex 4)"  # Generates unique name
 CONTAINER_NAME="tfstate"
-LOCATION="eastus"
+LOCATION="northeurope"
 
 # Create resource group
 az group create \
@@ -620,7 +620,7 @@ terraform init -reconfigure
 **Solution:**
 ```bash
 # Check your quota
-az vm list-usage --location eastus --output table
+az vm list-usage --location northeurope --output table
 
 # Request quota increase in Azure Portal:
 # Support + troubleshooting → New support request → Service and subscription limits (quotas)
