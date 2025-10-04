@@ -21,7 +21,7 @@ output "administrator_login" {
   description = "Administrator login for PostgreSQL"
   value       = azurerm_postgresql_flexible_server.main.administrator_login
   sensitive   = true
-}   
+}
 output "database_name" {
   description = "Name of the default database"
   value       = azurerm_postgresql_flexible_server_database.main.name

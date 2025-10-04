@@ -4,12 +4,12 @@ resource "azurerm_container_registry" "main" {
   location            = var.location
   sku                 = var.sku
   admin_enabled       = var.admin_enabled
-  
+
   dynamic "network_rule_set" {
     for_each = var.network_rule_set != null ? [var.network_rule_set] : []
     content {
       default_action = network_rule_set.value.default_action
-      
+
       dynamic "virtual_network" {
         for_each = network_rule_set.value.virtual_network_subnet_ids
         content {
@@ -19,6 +19,6 @@ resource "azurerm_container_registry" "main" {
       }
     }
   }
-  
+
   tags = var.tags
 }

@@ -9,7 +9,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix
   kubernetes_version  = var.kubernetes_version
-  
+
   default_node_pool {
     name                = var.default_node_pool.name
     node_count          = var.default_node_pool.node_count
@@ -21,11 +21,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     os_disk_size_gb     = var.default_node_pool.os_disk_size_gb
     type                = var.default_node_pool.type
   }
-  
+
   identity {
     type = "SystemAssigned"
   }
-  
+
   network_profile {
     network_plugin    = var.network_profile.network_plugin
     network_policy    = var.network_profile.network_policy
@@ -33,16 +33,16 @@ resource "azurerm_kubernetes_cluster" "main" {
     service_cidr      = var.network_profile.service_cidr
     dns_service_ip    = var.network_profile.dns_service_ip
   }
-  
+
   azure_active_directory_role_based_access_control {
     managed            = var.azure_active_directory_role_based_access_control.managed
     azure_rbac_enabled = var.azure_active_directory_role_based_access_control.azure_rbac_enabled
   }
-  
+
   oms_agent {
     log_analytics_workspace_id = var.oms_agent.log_analytics_workspace_id
   }
-  
+
   tags = var.tags
 }
 
