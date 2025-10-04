@@ -19,8 +19,9 @@ terraform {
     key                  = "ecommerce.tfstate"
   }
 }
-
+# Configure the Microsoft Azure Provider
 provider "azurerm" {
+ # resource_provider_registrations = "none" # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
   features {
     key_vault {
       purge_soft_delete_on_destroy    = true
@@ -30,6 +31,7 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+  skip_provider_registration = true
 }
 
 data "azurerm_client_config" "current" {}
