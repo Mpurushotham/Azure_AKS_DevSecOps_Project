@@ -56,7 +56,7 @@ variable "services_subnet_address_prefix" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.27"
+  default     = "1.30"
 }
 
 variable "system_node_count" {
@@ -74,13 +74,13 @@ variable "system_node_vm_size" {
 variable "system_node_min_count" {
   description = "Minimum number of system nodes for autoscaling"
   type        = number
-  default     = 3
+  default     = null
 }
 
 variable "system_node_max_count" {
   description = "Maximum number of system nodes for autoscaling"
   type        = number
-  default     = 10
+  default     = null
 }
 
 variable "user_node_count" {
@@ -138,7 +138,7 @@ variable "postgres_admin_password" {
 variable "postgres_sku_name" {
   description = "SKU name for PostgreSQL"
   type        = string
-  default     = "GP_Standard_D4s_v3"
+  default     = "GP_Standard_D2s_v3"
 }
 
 variable "postgres_storage_mb" {
@@ -156,7 +156,7 @@ variable "postgres_version" {
 variable "postgres_backup_retention_days" {
   description = "Backup retention days for PostgreSQL"
   type        = number
-  default     = 35
+  default     = 7
 }
 
 variable "postgres_geo_redundant_backup" {

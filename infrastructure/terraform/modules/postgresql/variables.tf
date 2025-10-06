@@ -48,11 +48,13 @@ variable "high_availability" {
 
 variable "delegated_subnet_id" {
   type = string
+  default = null
 }
 
 variable "virtual_network_id" {
   type = string
   description = "Virtual Network ID for Private DNS Zone linking"
+  default = null
 }
 
 variable "tags" {

@@ -17,6 +17,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
 }
 
 # PostgreSQL Flexible Server
+
 resource "azurerm_postgresql_flexible_server" "main" {
   name                   = var.server_name
   resource_group_name    = var.resource_group_name
@@ -34,15 +35,23 @@ resource "azurerm_postgresql_flexible_server" "main" {
   delegated_subnet_id = var.delegated_subnet_id
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   
+   # EXPLICITLY disable public network access
+  public_network_access_enabled = false
+  
+  /* Enable High Availability if specified is disabled due to not being supported iMulti-Zone HA is not supported in this region
+
   dynamic "high_availability" {
     for_each = var.high_availability.mode != "Disabled" ? [var.high_availability] : []
     content {
       mode = high_availability.value.mode
     }
   }
-  
+  */
+
   tags = var.tags
-  
+  # SSL enforcement
+ # ssl_enforcement_enabled = true
+
   depends_on = [
     azurerm_private_dns_zone_virtual_network_link.postgres
   ]

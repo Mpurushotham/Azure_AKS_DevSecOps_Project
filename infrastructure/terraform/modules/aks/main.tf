@@ -1,9 +1,16 @@
+/*
 resource "azurerm_resource_group" "name" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
   
 }
+*/
+
+# Get current Azure client config (includes tenant_id)
+data "azurerm_client_config" "current" {}
+
+
 resource "azurerm_kubernetes_cluster" "main" {
   name                = var.cluster_name
   location            = var.location
@@ -13,12 +20,14 @@ resource "azurerm_kubernetes_cluster" "main" {
   
   default_node_pool {
     name                = var.default_node_pool.name
-    node_count          = var.default_node_pool.node_count
+  #  node_count          = var.default_node_pool.node_count
+    node_count = 2
     vm_size             = var.default_node_pool.vm_size
     vnet_subnet_id      = var.default_node_pool.vnet_subnet_id
-    enable_auto_scaling = var.default_node_pool.enable_auto_scaling
-    min_count           = var.default_node_pool.min_count
-    max_count           = var.default_node_pool.max_count
+  # enable_auto_scaling = var.default_node_pool.enable_auto_scaling
+    auto_scaling_enabled = false
+  #  min_count           = var.default_node_pool.min_count
+  #  max_count           = var.default_node_pool.max_count
     os_disk_size_gb     = var.default_node_pool.os_disk_size_gb
     type                = var.default_node_pool.type
   }
@@ -36,8 +45,11 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
   
   azure_active_directory_role_based_access_control {
-    managed            = var.azure_active_directory_role_based_access_control.managed
-    azure_rbac_enabled = var.azure_active_directory_role_based_access_control.azure_rbac_enabled
+  #  managed            = var.azure_active_directory_role_based_access_control.managed
+  #  azure_rbac_enabled = var.azure_active_directory_role_based_access_control.azure_rbac_enabled
+  #  tenant_id = var.azure_ad_tenant_id
+    tenant_id = data.azurerm_client_config.current.tenant_id  # Auto-get tenant ID
+    #managed   = true
   }
   
   oms_agent {

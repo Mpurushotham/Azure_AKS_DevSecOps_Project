@@ -6,7 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.70.0"
+      version = "4.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -35,7 +35,8 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
-  skip_provider_registration = true
+ # skip_provider_registration = false
+  subscription_id = "36bd26b3-d5a3-4d75-9b42-68842c10325c"
 }
 
 # Get current Azure client configuration
@@ -182,7 +183,7 @@ module "aks" {
     node_count          = var.system_node_count
     vm_size             = var.system_node_vm_size
     vnet_subnet_id      = module.networking.subnet_ids["aks"]
-    enable_auto_scaling = true
+  #  enable_auto_scaling = true
     min_count           = var.system_node_min_count
     max_count           = var.system_node_max_count
     os_disk_size_gb     = 128
@@ -215,7 +216,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   kubernetes_cluster_id = module.aks.cluster_id
   vm_size               = var.user_node_vm_size
   node_count            = var.user_node_count
-  enable_auto_scaling   = true
+#  enable_auto_scaling   = true
   min_count             = var.user_node_min_count
   max_count             = var.user_node_max_count
   vnet_subnet_id        = module.networking.subnet_ids["aks"]
