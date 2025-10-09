@@ -125,7 +125,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     node_count          = 2  # Reduced for testing
     vm_size             = "Standard_D2s_v3"  # Smaller for cost
     vnet_subnet_id      = azurerm_subnet.aks.id
-    #enable_auto_scaling = false
+    enable_auto_scaling = false
   }
   
   identity {
